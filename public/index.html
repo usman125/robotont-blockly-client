@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Robotont Blockly App</title>
+    <link rel="icon" href="data:,">
+    <!-- Load Blockly from CDN -->
+    <script src="https://unpkg.com/blockly/blockly.min.js"></script>
+
+    <!-- Load roslib.js for ROS2 communication -->
+    <script src="scripts/roslib.min.js"></script>
+
+    <script defer src="https://code.getmdl.io/1.3.0/material.min.js"></script>
+    
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.indigo-pink.min.css">
+    <link rel="stylesheet" href="styles/index.css" />
+
+</head>
+<body>
+
+    <!-- App header container -->
+    <header class="header mdl-color--cyan-500">
+        <img src="assets/images/logo.png" alt="logo" />
+        <h1>Robotont blockly</h1>
+    </header>
+
+    <!-- Blockly Workspace Container -->
+    <div id="blocklyDiv"></div>
+
+    <!-- Controls Container -->
+    <div class="controls">
+        <!-- MDL Textarea -->
+        <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+            <textarea class="mdl-textfield__input" type="text" id="generatedCode" placeholder="Drag and drop blocks" rows="3"></textarea>
+            <label class="mdl-textfield__label" for="generatedCode">Generated Code</label>
+        </div>
+
+        <!-- Buttons -->
+        <button class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored" onclick="runCode()">
+            Run Code
+        </button>
+    </div>
+
+    <button onclick="sendToROS2()">Send to ROS2</button>
+
+    <script>
+        // Initialize Blockly
+        const workspace = Blockly.inject('blocklyDiv', {
+            toolbox: `
+                <xml>
+                    <block type="controls_if"></block>
+                    <block type="logic_compare"></block>
+                    <block type="math_number"></block>
+                    <block type="text_print"></block>
+                </xml>
+            `
+        });
+
+        // Generate code when workspace changes
+        // workspace.addChangeListener(() => {
+        //     const code = Blockly.JavaScript.workspaceToCode(workspace);
+        //     const textarea = document.getElementById('generatedCode');
+        //     textarea.value = code;
+
+        //     // Hide the label if the textarea has content
+        //     const label = document.querySelector('.mdl-textfield__label');
+        //     if (textarea.value.trim() !== '') {
+        //         label.style.display = 'none';
+        //     } else {
+        //         label.style.display = 'block';
+        //     }
+        // });
+
+        // Resize Blockly workspace when the window is resized
+        window.addEventListener('resize', () => {
+            Blockly.svgResize(workspace);
+        });
+
+        // Generate code when workspace changes
+        workspace.addChangeListener(() => {
+            const code = Blockly.JavaScript.workspaceToCode(workspace);
+            document.getElementById('generatedCode').value = code;
+        });
+
+        // Example: Run generated code (for demo purposes)
+        function runCode() {
+            const code = Blockly.JavaScript.workspaceToCode(workspace);
+            try {
+                eval(code); // Be cautious with eval in production!
+                sendToROS2();
+            } catch (error) {
+                console.error(error);
+            }
+        }
+
+        // ROS2 WebSocket connection
+        const ros = new ROSLIB.Ros({
+            url: 'ws://localhost:9090' // Replace with your ROS2 bridge IP
+        });
+
+        ros.on('connection', () => {
+            console.log('Connected to ROS2 bridge!');
+        });
+
+        ros.on('error', (error) => {
+            console.error('Error connecting to ROS2 bridge:', error);
+        });
+
+        ros.on('close', () => {
+            console.log('Connection to ROS2 bridge closed.');
+        });
+
+        // Advertise a ROS2 topic
+        const cmdVelTopic = new ROSLIB.Topic({
+            ros: ros,
+            name: '/cmd_vel',
+            messageType: 'example_interfaces/msg/String'
+        });
+
+        // Function to send generated code to ROS2
+        function sendToROS2() {
+            const code = Blockly.JavaScript.workspaceToCode(workspace);
+            console.log('Sending code to ROS2:', code);
+
+            // Example: Send a Twist message (customize this based on your needs)
+            const twistMsg = new ROSLIB.Message({
+                data: code
+            });
+
+            cmdVelTopic.publish(twistMsg);
+            console.log('Twist message sent to ROS2:', twistMsg);
+        }
+    </script>
+</body>
+</html>

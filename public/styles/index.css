@@ -1,0 +1,133 @@
+/* Reset default margin and padding */
+body,
+html {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+main {
+  width: 400px;
+  position: relative;
+  margin: 0 auto;
+  overflow: hidden;
+  height: 600px;
+}
+
+header {
+  background-color: green;
+  width: 100%;
+}
+
+h1 {
+  width: 400px;
+  position: relative;
+  margin: 0 auto;
+  color: #fff;
+  font-size: 1.8em;
+  line-height: 2.4em;
+  font-weight: bold;
+}
+
+.header {
+  margin-bottom: 20px;
+  margin-bottom: 20px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  background-color: #0e0c0a !important;
+}
+
+.header img {
+  max-width: 100%;
+  height: 50px;
+  object-fit: contain;
+  margin: 15px;
+}
+
+.mode-edit,
+.mode-maker,
+.mode-blockly {
+  display: none;
+}
+
+[mode='maker'] .mode-maker,
+[mode='edit'] .mode-edit,
+[mode='blockly'] .mode-blockly {
+  display: block;
+}
+
+.blockly-editor {
+  position: absolute;
+  top: 64px;
+  left: -400px;
+  transition: left 0.4s;
+  height: 460px;
+  width: 400px;
+  background-color: #eee;
+}
+
+[mode='blockly'] .blockly-editor {
+  left: 0;
+}
+
+.maker {
+  display: flex;
+  flex-flow: column;
+  justify-content: space-between;
+  height: 460px;
+  width: 400px;
+}
+
+.maker>div {
+  display: flex;
+  justify-content: space-between;
+}
+
+.button {
+  width: 120px;
+  height: 140px;
+  color: #fff;
+  font-size: 3em;
+  text-align: center;
+  vertical-align: middle;
+  line-height: 140px;
+}
+
+.mdl-button {
+  margin: 1em 0;
+  float: right;
+}
+
+
+
+
+/* Make the Blockly container fill the viewport */
+#blocklyDiv {
+  height: calc(100% - 300px);
+  /* Leave space for controls */
+  margin: 15px;
+}
+
+/* Style the controls container */
+.controls {
+  padding: 20px;
+  background: white;
+  box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  /* Ensure controls are above Blockly */
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+}
+
+/* Make the MDL text field 100% width */
+.mdl-textfield {
+  width: 100%;
+}
+
+
+/* Add some spacing between buttons */
+.controls button {
+  margin: 10px 0px;
+}
