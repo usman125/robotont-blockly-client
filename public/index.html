@@ -5,6 +5,9 @@
     <link rel="icon" href="data:,">
     <!-- Load Blockly from CDN -->
     <script src="https://unpkg.com/blockly/blockly.min.js"></script>
+    
+    <!-- Add after Blockly core -->  
+    <script src="https://unpkg.com/blockly/python_compressed.js"></script>
 
     <!-- Load roslib.js for ROS2 communication -->
     <script src="scripts/roslib.min.js"></script>
@@ -20,40 +23,161 @@
 
     <!-- App header container -->
     <header class="header mdl-color--cyan-500">
-        <img src="assets/images/logo.png" alt="logo" />
-        <h1>Robotont blockly</h1>
+        <img src="https://blocklycodelabs.dev/images/logo_knockout.png" alt="logo" />
+        <h1>Robotont</h1>
     </header>
 
-    <!-- Blockly Workspace Container -->
-    <div id="blocklyDiv"></div>
+    <!-- <div class="main-container"> -->
+        <!-- Blockly Workspace Container -->
+        <div id="blocklyDiv"></div>
 
-    <!-- Controls Container -->
-    <div class="controls">
-        <!-- MDL Textarea -->
-        <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
-            <textarea class="mdl-textfield__input" type="text" id="generatedCode" placeholder="Drag and drop blocks" rows="3"></textarea>
-            <label class="mdl-textfield__label" for="generatedCode">Generated Code</label>
+        <!-- Controls Container -->
+        <div class="controls">
+            <!-- MDL Textarea -->
+            <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+                <textarea class="mdl-textfield__input" type="text" id="generatedCode" placeholder="Drag and drop blocks" rows="3"></textarea>
+                <label class="mdl-textfield__label" for="generatedCode">Generated Code</label>
+            </div>
+
+            <!-- Buttons -->
+            <button class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored" onclick="runCode()">
+                Download Code
+            </button>
         </div>
+    <!-- </div> -->
 
-        <!-- Buttons -->
-        <button class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored" onclick="runCode()">
-            Run Code
-        </button>
-    </div>
-
-    <button onclick="sendToROS2()">Send to ROS2</button>
 
     <script>
+
+        // Custom Python block definition
+        Blockly.Blocks['robotont_move'] = {
+            init: function() {
+                this.appendDummyInput()
+                    .appendField("Draw")
+                    .appendField(new Blockly.FieldDropdown([
+                        ["RECTANGLE", "RECTANGLE"],
+                        ["CIRCLE", "CIRCLE"],
+                        ["STRAIGHT LINE", "STRAIGHT_LINE"]
+                    ]), "DIRECTION")
+                    .appendField("repeat")
+                    .appendField(new Blockly.FieldNumber(0, 0, 3, 1), "SPEED")
+                    .appendField("times.");
+                this.setPreviousStatement(true);
+                this.setNextStatement(true);
+                this.setColour(230);
+                this.setTooltip("Move robot forward/backward");
+            }
+        };
+
+        // Custom Python generator for the robotont_move block
+        python.pythonGenerator.forBlock['robotont_move'] = function(block) {
+            console.log("ROBOTONT BLOCK CHANGED...")
+
+            const direction = block.getFieldValue('DIRECTION'); // Get dropdown value
+            const speed = block.getFieldValue('SPEED'); // Get number value
+
+            let code;
+            if (direction === "RECTANGLE") {
+                code = `\n#!/usr/bin/env python3
+                        import rclpy
+                        from rclpy.node import Node
+                        from geometry_msgs.msg import Twist
+                        import time, math
+
+                        class RectangleController(Node):
+                            def __init__(self):
+                                super().__init__('rectangle_controller')
+
+                                # Publisher to the /turtle1/cmd_vel topic
+                                self.cmd_vel_publisher = self.create_publisher(Twist, '/cmd_vel', 10)
+
+                                self.get_logger().info("Rectangle Controller Node has been started.")
+
+                                # Add an initial delay to ensure turtlesim is ready
+                                self.get_logger().info("Waiting for turtlesim to be ready...")
+                                time.sleep(2.0)  # Wait for 2 seconds to let turtlesim initialize
+
+                                # Draw the rectangle
+                                self.draw_rectangle()
+
+                                def draw_rectangle(self):
+                                    """
+                                    Function to make the turtle draw a rectangle.
+                                    """
+                                    # Rectangle parameters
+                                    forward_speed = 1.0   # Linear speed (m/s)
+                                    turn_speed = 4.0      # Angular speed (rad/s)
+                                    short_side_duration = 2.0  # Time to move along short side (seconds)
+                                    long_side_duration = 4.0   # Time to move along long side (seconds)
+                                    turn_duration = 1.629 / turn_speed  # Time to turn 90 degrees (1.57 radians)
+
+                                    # Create Twist message for forward motion
+                                    move_forward = Twist()
+                                    move_forward.linear.x = forward_speed
+                                    move_forward.angular.z = 0.0
+
+                                    # Create Twist message for turning
+                                    turn = Twist()
+                                    turn.linear.x = 0.0
+                                    turn.angular.z = turn_speed
+
+                                    for _ in range(${speed*2}):  # Loop twice to complete the rectangle
+                                        # Move forward along the long side
+                                        self.get_logger().info("Moving along the long side...")
+                                        self.cmd_vel_publisher.publish(move_forward)
+                                        time.sleep(long_side_duration)
+
+                                        # Turn 90 degrees
+                                        self.get_logger().info("Turning 90 degrees...")
+                                        self.cmd_vel_publisher.publish(turn)
+                                        time.sleep(turn_duration)
+
+                                        # Move forward along the short side
+                                        self.get_logger().info("Moving along the short side...")
+                                        self.cmd_vel_publisher.publish(move_forward)
+                                        time.sleep(short_side_duration)
+
+                                        # Turn 90 degrees
+                                        self.get_logger().info("Turning 90 degrees...")
+                                        self.cmd_vel_publisher.publish(turn)
+                                        time.sleep(turn_duration)
+
+                                    # Stop the turtle after drawing the rectangle
+                                    self.get_logger().info("Stopping the turtle...")
+                                    stop = Twist()
+                                    self.cmd_vel_publisher.publish(stop)
+
+
+                                    def main(args=None):
+                                        rclpy.init(args=args)
+                                        node = RectangleController()
+                                        rclpy.spin(node)
+                                        rclpy.shutdown()
+
+                                    if __name__ == "__main__":
+                                        main()\n`;
+            } else if (direction === "CIRCLE") {
+                code = `robot.draw_circle(repeat=${speed})\n`;
+            } else if (direction === "STRAIGHT_LINE") {
+                code = `robot.move_straight(repeat=${speed})\n`;
+            } else {
+                code = `# Unknown direction\n`;
+            }
+            return code;
+        };
+
         // Initialize Blockly
         const workspace = Blockly.inject('blocklyDiv', {
             toolbox: `
                 <xml>
+                    <block type="robotont_move"></block>
                     <block type="controls_if"></block>
                     <block type="logic_compare"></block>
                     <block type="math_number"></block>
                     <block type="text_print"></block>
                 </xml>
-            `
+            `,
+            media: 'https://unpkg.com/blockly/media/'
         });
 
         // Generate code when workspace changes
@@ -71,6 +195,7 @@
         //     }
         // });
 
+
         // Resize Blockly workspace when the window is resized
         window.addEventListener('resize', () => {
             Blockly.svgResize(workspace);
@@ -78,19 +203,35 @@
 
         // Generate code when workspace changes
         workspace.addChangeListener(() => {
-            const code = Blockly.JavaScript.workspaceToCode(workspace);
+            const code = Blockly.Python.workspaceToCode(workspace);
             document.getElementById('generatedCode').value = code;
         });
 
+
         // Example: Run generated code (for demo purposes)
         function runCode() {
-            const code = Blockly.JavaScript.workspaceToCode(workspace);
+            const code = Blockly.Python.workspaceToCode(workspace);
             try {
-                eval(code); // Be cautious with eval in production!
-                sendToROS2();
+                // eval(code); // Be cautious with eval in production!
+                downloadPythonNode(code)
+                // sendToROS2();
             } catch (error) {
                 console.error(error);
             }
+        }
+
+        // Update download function
+        function downloadPythonNode(code) {
+            
+            const blob = new Blob([code], {type: 'text/x-python'});
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'robotont_controller.py';
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
         }
 
         // ROS2 WebSocket connection
