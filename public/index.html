@@ -4,34 +4,26 @@
     <title>Robotont Blockly App</title>
     <link rel="icon" href="data:," />
     <!-- Load Blockly from CDN -->
-    <script src="https://unpkg.com/blockly/blockly.min.js"></script>
+    <script src="scripts/blockly.min.js"></script>
 
     <!-- Add after Blockly core -->
-    <script src="https://unpkg.com/blockly/python_compressed.js"></script>
+    <script src="scripts/python_compressed.js"></script>
 
     <!-- Load roslib.js for ROS2 communication -->
     <script src="scripts/roslib.min.js"></script>
-
-
 
     <link
       rel="stylesheet"
       href="https://fonts.googleapis.com/icon?family=Material+Icons"
     />
-    <link
-      rel="stylesheet"
-      href="https://code.getmdl.io/1.3.0/material.indigo-pink.min.css"
-    />
+    <link rel="stylesheet" href="styles/material.indigo-pink.min.css" />
     <link rel="stylesheet" href="styles/index.css" />
   </head>
   <body>
     <!-- App header container -->
     <header class="header mdl-color--cyan-500">
-      <img
-        src="https://blocklycodelabs.dev/images/logo_knockout.png"
-        alt="logo"
-      />
-      <h1>Robotont</h1>
+      <img src="assets/images/logo_knockout.png" alt="logo" />
+      <h1 class="title">Robotont</h1>
     </header>
 
     <!-- <div class="main-container"> -->
@@ -56,9 +48,10 @@
 
       <!-- Buttons -->
       <button
-        class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored"
+        class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored mdl-js-ripple-effect"
         onclick="runCode()"
       >
+        <i class="material-icons">download</i>
         Download Code
       </button>
     </div>
@@ -234,7 +227,7 @@
                 turn.linear.x = 0.0
                 turn.angular.z = turn_speed
 
-                for _ in range(repeat):
+                for _ in range(repeat*2):
                     # Move forward along the long side
                     self.get_logger().info("Moving along the long side...")
                     self.cmd_vel_publisher.publish(move_forward)
@@ -330,7 +323,7 @@
             class ${className}(Node):
                 def __init__(self):
                     super().__init__('${nodeName}')
-                    self.cmd_vel_publisher = self.create_publisher(Twist, '${publisherName}', 10)
+                    self.cmd_vel_publisher = self.create_publisher(Twist, '/${publisherName}', 10)
                     self.get_logger().info("${className} Node has been started.")
                     time.sleep(2.0)  # Wait for initialization
                     ${movementCall}
@@ -373,10 +366,7 @@
 
       // Custom Python generator for the robotont_move block
       python.pythonGenerator.forBlock["robotont_move"] = function (block) {
-        console.log("ROBOTONT BLOCK CHANGED...");
-
-        const direction = block.getFieldValue("DIRECTION");
-        const speed = block.getFieldValue("SPEED");
+        // console.log("ROBOTONT MOVE BLOCK CHANGED...")
 
         const code = "";
         return code;
@@ -431,22 +421,39 @@
       // Example: Run generated code (for demo purposes)
       function runCode() {
         const code = Blockly.Python.workspaceToCode(workspace);
+
+        // Find the no`deName value from the workspace
+        let nodeName = "robot_controller"; // default value
+        const allBlocks = workspace.getAllBlocks();
+        for (let i = 0; i < allBlocks.length; i++) {
+          if (allBlocks[i].type === "node_name") {
+            nodeName = allBlocks[i].getFieldValue("nodeName") || nodeName;
+            break;
+          }
+        }
+
+        console.log(nodeName);
+
         try {
-          // eval(code); // Be cautious with eval in production!
-          downloadPythonNode(code);
-          // sendToROS2();
+          downloadPythonNode(code, nodeName);
         } catch (error) {
           console.error(error);
         }
       }
 
       // Update download function
-      function downloadPythonNode(code) {
+      function downloadPythonNode(code, nodeName) {
+        // Sanitize the nodeName to be a valid filename
+        const sanitizedNodeName = nodeName
+          .replace(/[^a-zA-Z0-9_-]/g, "_") // Replace special chars with underscore
+          .toLowerCase(); // Convert to lowercase
+
+        const filename = `${sanitizedNodeName}.py`;
         const blob = new Blob([code], { type: "text/x-python" });
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
-        a.download = "robotont_controller.py";
+        a.download = filename;
         document.body.appendChild(a);
         a.click();
         window.URL.revokeObjectURL(url);
