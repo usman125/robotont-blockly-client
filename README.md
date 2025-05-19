@@ -16,7 +16,7 @@ Visit `http://localhost:8080/`, you can assign a different port in `server.js`
 
 ### Available Block examples
 
-<img src="block_examples/ros_connection.jpg" width="200"/>
+<img src="block_example_visuals/ros_connection.jpg" width="200"/>
 
 This Blockly block has the following JavaScript definition
 
@@ -43,7 +43,7 @@ python.pythonGenerator.forBlock["ros_connection"] = function (block) {
 };
 ```
 
-<img src="block_examples_visuals/robot_move.jpg" width="200"/>
+<img src="block_example_visuals/robot_move.jpg" width="200"/>
 
 This Blockly block has the following JavaScript definition
 
@@ -83,7 +83,7 @@ python.pythonGenerator.forBlock["robotont_move"] = function (block) {
 
 These blocks definitions given below have an advanced use, if we want to change the scaffoled class name, node name, or publisher name.
 
-<img src="block_examples_visuals/set_class_name.jpg" width="200"/>
+<img src="block_example_visuals/set_class_name.jpg" width="200"/>
 
 This Blockly block has the following JavaScript definition
 
@@ -112,7 +112,7 @@ python.pythonGenerator.forBlock["class_name"] = function (block) {
 };
 ```
 
-<img src="block_examples_visuals/set_node_name.jpg" width="200"/>
+<img src="block_example_visuals/set_node_name.jpg" width="200"/>
 
 This Blockly block has the following JavaScript definition
 
@@ -142,7 +142,7 @@ python.pythonGenerator.forBlock["node_name"] = function (block) {
 };
 ```
 
-<img src="block_examples_visuals/set_publisher_name.jpg" width="200"/>
+<img src="block_example_visuals/set_publisher_name.jpg" width="200"/>
 
 This Blockly block has the following JavaScript definition
 
