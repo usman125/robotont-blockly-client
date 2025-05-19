@@ -28,7 +28,7 @@ This setup contains some of the Vanilla Blockly blocks along with some custom bl
 
 To see custom block visuals, click [this link](https://github.com/usman125/robotont-blockly-client/tree/master/custom_block_visuals)
 
-### ROS code scaffolding
+* ### ROS code scaffolding
 
 <img src="custom_block_visuals/ros_connection.png" width="200"/>
 
@@ -253,7 +253,7 @@ if __name__ == "__main__":
     main()
 ```
 
-### Basic robot movements
+* ### Basic robot movements
 
 <img src="custom_block_visuals/robot_move.png" width="400"/>
 
@@ -444,7 +444,7 @@ def draw_rectangle(self):
 
 These blocks definitions given below have an advanced use, if we want to change the scaffoled class name, node name, or publisher name.
 
-### Edit class name
+* ### Edit class name
 
 <img src="custom_block_visuals/set_class_name.png" width="200"/>
 
@@ -475,7 +475,7 @@ python.pythonGenerator.forBlock["class_name"] = function (block) {
 };
 ```
 
-### Edit node name
+* ### Edit node name
 
 <img src="custom_block_visuals/set_node_name.png" width="200"/>
 
@@ -507,7 +507,7 @@ python.pythonGenerator.forBlock["node_name"] = function (block) {
 };
 ```
 
-### Edit publisher name
+* ### Edit publisher name
 
 <img src="custom_block_visuals/set_publisher_name.png" width="200"/>
 
