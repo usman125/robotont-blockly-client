@@ -599,11 +599,11 @@ workspace.addChangeListener(() => {
 });
 ```
 
-## Blocks usage example
+## Blocks usage examples
 
 Example block combinations for drawing a circle
 
-<img src="custom_block_visuals/draw_circle_example.png" width="200"/>
+<img src="custom_block_visuals/draw_circle_example.png" width="400"/>
 
 Downloadable Python generated code from such block combination, to view the result simulation by executing this code [View animated gif](https://github.com/usman125/robotont-blockly-client/blob/main/RViZ_result_simulations/robotont_circle_simulation.gif).
 
@@ -651,7 +651,7 @@ if __name__ == "__main__":
 
 Overwrite defaut ROS node code
 
-<img src="custom_block_visuals/overwrite_defaults.png" width="200"/>
+<img src="custom_block_visuals/overwrite_defaults.png" width="400"/>
 
 Downloadable Python generated code from such block combination
 
