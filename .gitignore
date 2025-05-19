@@ -1,0 +1,15 @@
+
+# ROS2-specific
+build/
+install/
+log/
+*.pyc
+__pycache__
+
+# General
+*.swp
+*.bak
+
+.vscode/
+
+node_modules/

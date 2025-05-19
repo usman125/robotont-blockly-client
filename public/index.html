@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Robotont Blockly App</title>
+    <link rel="icon" href="data:," />
+    <!-- Load Blockly from CDN -->
+    <script src="scripts/blockly.min.js"></script>
+
+    <!-- Add after Blockly core -->
+    <script src="scripts/python_compressed.js"></script>
+
+    <!-- Load roslib.js for ROS2 communication -->
+    <script src="scripts/roslib.min.js"></script>
+
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/icon?family=Material+Icons"
+    />
+    <link rel="stylesheet" href="styles/material.indigo-pink.min.css" />
+    <link rel="stylesheet" href="styles/index.css" />
+  </head>
+  <body>
+    <!-- App header container -->
+    <header class="header mdl-color--cyan-500">
+      <img src="assets/images/logo_knockout.png" alt="logo" />
+      <h1 class="title">Robotont</h1>
+    </header>
+    
+    <!-- Blockly Workspace Container -->
+    <div id="blocklyDiv" style="height: 640px"></div>
+
+    <!-- Controls Container -->
+    <div class="controls">
+      <!-- MDL Textarea -->
+      <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+        <textarea
+          class="mdl-textfield__input"
+          type="text"
+          id="generatedCode"
+          placeholder="Drag and drop blocks"
+          rows="3"
+        ></textarea>
+        <label class="mdl-textfield__label" for="generatedCode"
+          >Generat Code</label
+        >
+      </div>
+
+      <!-- Buttons -->
+      <button
+        class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored mdl-js-ripple-effect"
+        onclick="runCode()"
+      >
+        <i class="material-icons">download</i>
+        Download Code
+      </button>
+    </div>
+    <!-- </div> -->
+
+    <script>
+      Blockly.Blocks["robotont_if"] = {
+        init: function () {
+          this.appendValueInput("ROBOTONT_IF_CONDITION") // Input for the condition (boolean)
+            .setCheck("Boolean")
+            .appendField("if");
+          this.appendStatementInput("DO") // Statement input for nested blocks
+            .appendField("then");
+          this.setPreviousStatement(true); // Can connect to blocks before it
+          this.setNextStatement(true); // Can connect to blocks after it
+          this.setColour(120); // Different color for logic blocks
+          this.setTooltip(
+            "Execute blocks inside only if the condition is true."
+          );
+        },
+      };
+
+      Blockly.Blocks["robotont_print"] = {
+        init: function () {
+          this.appendValueInput("ROBOTONT_PRINT_TEXT") // Input for the text to print
+            .setCheck("String")
+            .appendField("print");
+          this.setPreviousStatement(true);
+          this.setNextStatement(true);
+          this.setColour(160); // Different color for output blocks
+          this.setTooltip("Print the given text.");
+        },
+      };
+
+      Blockly.Blocks["ros_connection"] = {
+        init: function () {
+          this.appendDummyInput("DUMMY")
+            .setAlign(Blockly.inputs.Align.RIGHT)
+            .appendField("CONNECT TO ROS");
+          this.appendStatementInput("ros_connection");
+          this.setTooltip("set ros node parameters");
+          this.setHelpUrl("none");
+          this.setColour(15);
+        },
+      };
+
+      Blockly.Blocks["class_name"] = {
+        init: function () {
+          this.appendDummyInput("class name")
+            .setAlign(Blockly.inputs.Align.RIGHT)
+            .appendField("class name")
+            .appendField(new Blockly.FieldTextInput(""), "className");
+          this.setNextStatement(true, null); // Can connect to blocks after it
+          this.setPreviousStatement(true, null); // Can connect to blocks before it
+          this.setTooltip("set class name");
+          this.setHelpUrl("none");
+          this.setColour(120);
+        },
+      };
+
+      Blockly.Blocks["node_name"] = {
+        init: function () {
+          this.appendDummyInput("node name")
+            .setAlign(Blockly.inputs.Align.RIGHT)
+            .appendField("node name")
+            .appendField(new Blockly.FieldTextInput(""), "nodeName");
+          this.setNextStatement(true, null); // Can connect to blocks after it
+          this.setPreviousStatement(true, null); // Can connect to blocks before it
+
+          this.setTooltip("set node name");
+          this.setHelpUrl("none");
+          this.setColour(120);
+        },
+      };
+
+      Blockly.Blocks["publisher_name"] = {
+        init: function () {
+          this.appendDummyInput("publisher name")
+            .setAlign(Blockly.inputs.Align.RIGHT)
+            .appendField("publisher name")
+            .appendField(new Blockly.FieldTextInput(""), "publisherName");
+          this.setNextStatement(true, null); // Can connect to blocks after it
+          this.setPreviousStatement(true, null); // Can connect to blocks before it
+          this.setTooltip("set publisher name");
+          this.setHelpUrl("none");
+          this.setColour(120);
+        },
+      };
+
+      // Custom Python block definition
+      Blockly.Blocks["robotont_move"] = {
+        init: function () {
+          this.appendDummyInput()
+            .appendField("Draw")
+            .appendField(
+              new Blockly.FieldDropdown([
+                ["RECTANGLE", "RECTANGLE"],
+                ["CIRCLE", "CIRCLE"],
+                ["STRAIGHT LINE", "STRAIGHT_LINE"],
+              ]),
+              "DIRECTION"
+            )
+            .appendField("repeat")
+            .appendField(new Blockly.FieldNumber(0, 0, 3, 1), "SPEED")
+            .appendField("times.");
+          this.setPreviousStatement(true);
+          this.setNextStatement(true);
+          // this.setOutput(true, null);
+          this.setColour(230);
+          this.setTooltip("Move robot forward/backward");
+        },
+      };
+
+      // PYTHON CODE DENERATORS FOR THE BLOCKS STARTS HERE
+
+      python.pythonGenerator.forBlock["ros_connection"] = function (block) {
+        // Get all the statements inside the ros_connection block
+        const statements = Blockly.Python.statementToCode(
+          block,
+          "ros_connection"
+        );
+
+        // Find all the configuration blocks within this ros_connection block
+        let className = "RobotController";
+        let nodeName = "robot_controller";
+        let publisherName = "/cmd_vel";
+        let movementType = "";
+        let repeatCount = 0;
+
+        // Get the top block in the statement input
+        let currentBlock = block.getInputTargetBlock("ros_connection");
+
+        while (currentBlock) {
+          switch (currentBlock.type) {
+            case "class_name":
+              className = currentBlock.getFieldValue("className") || className;
+              break;
+            case "node_name":
+              nodeName = currentBlock.getFieldValue("nodeName") || nodeName;
+              break;
+            case "publisher_name":
+              publisherName =
+                currentBlock.getFieldValue("publisherName") || publisherName;
+              break;
+            case "robotont_move":
+              movementType = currentBlock.getFieldValue("DIRECTION");
+              repeatCount = currentBlock.getFieldValue("SPEED");
+              break;
+          }
+          currentBlock = currentBlock.getNextBlock();
+        }
+
+        // Generate movement function based on selected type
+        let movementFunction = "";
+        switch (movementType) {
+          case "RECTANGLE":
+            movementFunction = `
+            def draw_rectangle(self, repeat):
+                """Function to make the robot draw a rectangle."""
+                forward_speed = 1.0   # Linear speed (m/s)
+                turn_speed = 4.0      # Angular speed (rad/s)
+                short_side_duration = 2.0  # Time to move along short side (seconds)
+                long_side_duration = 4.0   # Time to move along long side (seconds)
+                turn_duration = 1.629 / turn_speed  # Time to turn 90 degrees (1.57 radians)
+
+                # Create Twist message for forward motion
+                move_forward = Twist()
+                move_forward.linear.x = forward_speed
+                move_forward.angular.z = 0.0
+
+                # Create Twist message for turning
+                turn = Twist()
+                turn.linear.x = 0.0
+                turn.angular.z = turn_speed
+
+                for _ in range(repeat*2):
+                    # Move forward along the long side
+                    self.get_logger().info("Moving along the long side...")
+                    self.cmd_vel_publisher.publish(move_forward)
+                    time.sleep(long_side_duration)
+
+                    # Turn 90 degrees
+                    self.get_logger().info("Turning 90 degrees...")
+                    self.cmd_vel_publisher.publish(turn)
+                    time.sleep(turn_duration)
+
+                    # Move forward along the short side
+                    self.get_logger().info("Moving along the short side...")
+                    self.cmd_vel_publisher.publish(move_forward)
+                    time.sleep(short_side_duration)
+
+                    # Turn 90 degrees
+                    self.get_logger().info("Turning 90 degrees...")
+                    self.cmd_vel_publisher.publish(turn)
+                    time.sleep(turn_duration)
+
+                # Stop the robot after drawing
+                self.get_logger().info("Stopping the robot...")
+                stop = Twist()
+                self.cmd_vel_publisher.publish(stop)
+        `;
+            break;
+
+          case "CIRCLE":
+            movementFunction = `
+            def draw_circle(self, repeat):
+                """Function to make the robot draw a circle."""
+                linear_speed = 1.0
+                angular_speed = 0.5
+                duration = 2.0  # Time for each circle segment
+                
+                for _ in range(repeat):
+                    twist = Twist()
+                    twist.linear.x = linear_speed
+                    twist.angular.z = angular_speed
+                    self.cmd_vel_publisher.publish(twist)
+                    time.sleep(duration)
+                
+                # Stop the robot
+                stop = Twist()
+                self.cmd_vel_publisher.publish(stop)
+        `;
+            break;
+
+          case "STRAIGHT_LINE":
+            movementFunction = `
+            def move_straight(self, repeat):
+                """Function to make the robot move straight."""
+                speed = 1.0
+                duration = 2.0
+                
+                for _ in range(repeat):
+                    twist = Twist()
+                    twist.linear.x = speed
+                    self.cmd_vel_publisher.publish(twist)
+                    time.sleep(duration)
+                
+                # Stop the robot
+                stop = Twist()
+                self.cmd_vel_publisher.publish(stop)
+        `;
+            break;
+
+          default:
+            movementFunction = `
+            # No movement function defined
+            def no_movement(self):
+                self.get_logger().info("No movement pattern selected")
+        `;
+        }
+
+        // Generate the call to the movement function
+        let movementCall = "";
+        if (movementType === "RECTANGLE") {
+          movementCall = `self.draw_rectangle(${repeatCount})`;
+        } else if (movementType === "CIRCLE") {
+          movementCall = `self.draw_circle(${repeatCount})`;
+        } else if (movementType === "STRAIGHT_LINE") {
+          movementCall = `self.move_straight(${repeatCount})`;
+        }
+
+        // Generate the complete Python code
+        const code = `#!/usr/bin/env python3
+            import rclpy
+            from rclpy.node import Node
+            from geometry_msgs.msg import Twist
+            import time, math
+
+            class ${className}(Node):
+                def __init__(self):
+                    super().__init__('${nodeName}')
+                    self.cmd_vel_publisher = self.create_publisher(Twist, '/${publisherName}', 10)
+                    self.get_logger().info("${className} Node has been started.")
+                    time.sleep(2.0)  # Wait for initialization
+                    ${movementCall}
+                    ${movementFunction}
+            def main(args=None):
+                rclpy.init(args=args)
+                node = ${className}()
+                rclpy.spin(node)
+                rclpy.shutdown()
+
+            if __name__ == "__main__":
+                main()`;
+
+        return code;
+      };
+
+      python.pythonGenerator.forBlock["class_name"] = function (block) {
+        const text_nodename = block.getFieldValue("className");
+
+        // TODO: Assemble python into the code variable.
+        const code = "";
+        return code;
+      };
+
+      python.pythonGenerator.forBlock["node_name"] = function (block) {
+        const text_nodename = block.getFieldValue("nodeName");
+
+        // TODO: Assemble python into the code variable.
+        const code = "";
+        return code;
+      };
+
+      python.pythonGenerator.forBlock["publisher_name"] = function (block) {
+        const text_publishername = block.getFieldValue("publisherName");
+
+        // TODO: Assemble python into the code variable.
+        const code = "";
+        return code;
+      };
+
+      // Custom Python generator for the robotont_move block
+      python.pythonGenerator.forBlock["robotont_move"] = function (block) {
+        // console.log("ROBOTONT MOVE BLOCK CHANGED...")
+
+        const code = "";
+        return code;
+      };
+
+      // Initialize Blockly
+      const workspace = Blockly.inject("blocklyDiv", {
+        toolbox: `
+                <xml>
+                    <block type="ros_connection"></block>
+                    <block type="class_name"></block>
+                    <block type="node_name"></block>
+                    <block type="publisher_name"></block>
+                    <block type="robotont_move"></block>
+                    <block type="robotont_if"></block>
+                    <block type="robotont_print"></block>
+                    <block type="controls_if"></block>
+                    <block type="logic_compare"></block>
+                    <block type="math_number"></block>
+                    <block type="text_print"></block>
+                </xml>
+            `,
+        media: "https://unpkg.com/blockly/media/",
+      });
+
+      // Generate code when workspace changes
+      // workspace.addChangeListener(() => {
+      //     const code = Blockly.JavaScript.workspaceToCode(workspace);
+      //     const textarea = document.getElementById('generatedCode');
+      //     textarea.value = code;
+
+      //     // Hide the label if the textarea has content
+      //     const label = document.querySelector('.mdl-textfield__label');
+      //     if (textarea.value.trim() !== '') {
+      //         label.style.display = 'none';
+      //     } else {
+      //         label.style.display = 'block';
+      //     }
+      // });
+
+      // Resize Blockly workspace when the window is resized
+      window.addEventListener("resize", () => {
+        Blockly.svgResize(workspace);
+      });
+
+      // Generate code when workspace changes
+      workspace.addChangeListener(() => {
+        const code = Blockly.Python.workspaceToCode(workspace);
+        document.getElementById("generatedCode").value = code;
+      });
+
+      // Example: Run generated code (for demo purposes)
+      function runCode() {
+        const code = Blockly.Python.workspaceToCode(workspace);
+
+        // Find the no`deName value from the workspace
+        let nodeName = "robot_controller"; // default value
+        const allBlocks = workspace.getAllBlocks();
+        for (let i = 0; i < allBlocks.length; i++) {
+          if (allBlocks[i].type === "node_name") {
+            nodeName = allBlocks[i].getFieldValue("nodeName") || nodeName;
+            break;
+          }
+        }
+
+        console.log(nodeName);
+
+        try {
+          downloadPythonNode(code, nodeName);
+        } catch (error) {
+          console.error(error);
+        }
+      }
+
+      // Update download function
+      function downloadPythonNode(code, nodeName) {
+        // Sanitize the nodeName to be a valid filename
+        const sanitizedNodeName = nodeName
+          .replace(/[^a-zA-Z0-9_-]/g, "_") // Replace special chars with underscore
+          .toLowerCase(); // Convert to lowercase
+
+        const filename = `${sanitizedNodeName}.py`;
+        const blob = new Blob([code], { type: "text/x-python" });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+      }
+
+      // ROS2 WebSocket connection
+      const ros = new ROSLIB.Ros({
+        url: "ws://localhost:9090", // Replace with your ROS2 bridge IP
+      });
+
+      ros.on("connection", () => {
+        console.log("Connected to ROS2 bridge!");
+      });
+
+      ros.on("error", (error) => {
+        console.error("Error connecting to ROS2 bridge:", error);
+      });
+
+      ros.on("close", () => {
+        console.log("Connection to ROS2 bridge closed.");
+      });
+
+      // Advertise a ROS2 topic
+      const cmdVelTopic = new ROSLIB.Topic({
+        ros: ros,
+        name: "/cmd_vel",
+        messageType: "example_interfaces/msg/String",
+      });
+
+      // Function to send generated code to ROS2
+      function sendToROS2() {
+        const code = Blockly.JavaScript.workspaceToCode(workspace);
+        console.log("Sending code to ROS2:", code);
+
+        // Example: Send a Twist message (customize this based on your needs)
+        const twistMsg = new ROSLIB.Message({
+          data: code,
+        });
+
+        cmdVelTopic.publish(twistMsg);
+        console.log("Twist message sent to ROS2:", twistMsg);
+      }
+    </script>
+    <script defer src="scripts//material.min.js"></script>
+  </body>
+</html>

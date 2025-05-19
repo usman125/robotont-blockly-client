@@ -1,0 +1,15 @@
+body {
+    font-family: Arial, sans-serif;
+    padding: 20px;
+}
+
+#blocklyDiv {
+    border: 1px solid #ccc;
+    margin-bottom: 20px;
+}
+
+#generatedCode {
+    display: block;
+    width: 1000px;
+    margin-top: 20px;
+}
