@@ -18,9 +18,15 @@ Visit `http://localhost:8080/` to change the port number view `server.js`
 
 <img src="custom_block_visuals/web_app_view.png" width="500" />
 
+`public` folder contains the `index.html` 
+To maintain the `Blockly` JavaScript files, any other custom or 3rd party JavaScript libraries  `scripts` folder is used. 
+`styles` includes the basic styles needed to visually make the user interface better for the web application and Blockly workspace. `assets` contains all the images used on the app. 
+
 ## Available Block examples
 
 This setup contains some of the Vanilla Blockly blocks along with some custom blocks to achieve ROS compatibility. Below defined custom blocks are available.
+
+To see custom block visuals, click [this link](https://github.com/usman125/robotont-blockly-client/tree/master/custom_block_visuals)
 
 ### ROS code scaffolding
 
