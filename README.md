@@ -651,7 +651,7 @@ if __name__ == "__main__":
 
 Overwrite defaut ROS node code
 
-<img src="custom_block_visuals/overwrite_defaults.png" width="400"/>
+<img src="custom_block_visuals/overwrite_defaults.png" width="300"/>
 
 Downloadable Python generated code from such block combination
 
