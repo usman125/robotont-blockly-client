@@ -2,8 +2,6 @@
 
 This code contains a Blockly based web application to control Robotont. This repo can be used to set up a local web application running Blockly as the visual programming language and translate the blocks into Python ROS executable nodes.
 
-<img src="custom_block_visuals/web_app_view.png" width="400" />
-
 ### How to use?
 
 This app is generated using `node` and `npm`
@@ -18,11 +16,13 @@ $ node server.js
 
 Visit `http://localhost:8080/` to change the port number view `server.js`
 
+<img src="custom_block_visuals/web_app_view.png" width="500" />
+
 ## Available Block examples
 
 This setup contains some of the Vanilla Blockly blocks along with some custom blocks to achieve ROS compatibility. Below defined custom blocks are available.
 
-### ROS node scaffold
+### ROS code scaffolding
 
 <img src="custom_block_visuals/ros_connection.png" width="200"/>
 
