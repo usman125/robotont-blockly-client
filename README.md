@@ -42,7 +42,7 @@ Blockly.Blocks["ros_connection"] = {
 };
 ```
 
-A subsequent python code generation code for this block
+A subsequent python code generation for this block
 
 ```javascript
 python.pythonGenerator.forBlock["ros_connection"] = function (block) {
@@ -216,6 +216,37 @@ python.pythonGenerator.forBlock["ros_connection"] = function (block) {
 };
 ```
 
+Code returned by the pythonGenerator
+
+```python
+#!/usr/bin/env python3
+import rclpy
+from rclpy.node import Node
+from geometry_msgs.msg import Twist
+import time, math
+
+class RobotController(Node):
+    def __init__(self):
+        super().__init__('robot_controller')
+        self.cmd_vel_publisher = self.create_publisher(Twist, //cmd_vel, 10)
+        self.get_logger().info("RobotController Node has been started.")
+        time.sleep(2.0)  # Wait for initialization
+
+
+# No movement function defined
+def no_movement(self):
+    self.get_logger().info("No movement pattern selected")
+
+def main(args=None):
+    rclpy.init(args=args)
+    node = RobotController()
+    rclpy.spin(node)
+    rclpy.shutdown()
+
+if __name__ == "__main__":
+    main()
+```
+
 ### Basic robot movements
 
 <img src="custom_block_visuals/robot_move.png" width="400"/>
@@ -259,7 +290,7 @@ python.pythonGenerator.forBlock["robotont_move"] = function (block) {
   switch (movementType) {
     case "RECTANGLE":
       code = `
-            def draw_rectangle(self, repeat):
+            def draw_rectangle(self):
                 """Function to make the robot draw a rectangle."""
                 forward_speed = 1.0   # Linear speed (m/s)
                 turn_speed = 4.0      # Angular speed (rad/s)
@@ -277,7 +308,7 @@ python.pythonGenerator.forBlock["robotont_move"] = function (block) {
                 turn.linear.x = 0.0
                 turn.angular.z = turn_speed
 
-                for _ in range(repeat*2):
+                for _ in range(${repeatCount}*2):
                     # Move forward along the long side
                     self.get_logger().info("Moving along the long side...")
                     self.cmd_vel_publisher.publish(move_forward)
@@ -307,13 +338,13 @@ python.pythonGenerator.forBlock["robotont_move"] = function (block) {
 
     case "CIRCLE":
       code = `
-            def draw_circle(self, repeat):
+            def draw_circle(self):
                 """Function to make the robot draw a circle."""
                 linear_speed = 1.0
                 angular_speed = 0.5
                 duration = 2.0  # Time for each circle segment
                 
-                for _ in range(repeat):
+                for _ in range(${repeatCount}):
                     twist = Twist()
                     twist.linear.x = linear_speed
                     twist.angular.z = angular_speed
@@ -328,12 +359,12 @@ python.pythonGenerator.forBlock["robotont_move"] = function (block) {
 
     case "STRAIGHT_LINE":
       code = `
-            def move_straight(self, repeat):
+            def move_straight(self):
                 """Function to make the robot move straight."""
                 speed = 1.0
                 duration = 2.0
                 
-                for _ in range(repeat):
+                for _ in range(${repeatCount}):
                     twist = Twist()
                     twist.linear.x = speed
                     self.cmd_vel_publisher.publish(twist)
@@ -354,6 +385,55 @@ python.pythonGenerator.forBlock["robotont_move"] = function (block) {
   }
   return code;
 };
+```
+
+code returned by the pythonGenerator
+
+```python
+def draw_rectangle(self):
+    """Function to make the robot draw a rectangle."""
+    forward_speed = 1.0   # Linear speed (m/s)
+    turn_speed = 4.0      # Angular speed (rad/s)
+    short_side_duration = 2.0  # Time to move along short side (seconds)
+    long_side_duration = 4.0   # Time to move along long side (seconds)
+    turn_duration = 1.629 / turn_speed  # Time to turn 90 degrees (1.57 radians)
+
+    # Create Twist message for forward motion
+    move_forward = Twist()
+    move_forward.linear.x = forward_speed
+    move_forward.angular.z = 0.0
+
+    # Create Twist message for turning
+    turn = Twist()
+    turn.linear.x = 0.0
+    turn.angular.z = turn_speed
+
+    for _ in range(0):
+        # Move forward along the long side
+        self.get_logger().info("Moving along the long side...")
+        self.cmd_vel_publisher.publish(move_forward)
+        time.sleep(long_side_duration)
+
+        # Turn 90 degrees
+        self.get_logger().info("Turning 90 degrees...")
+        self.cmd_vel_publisher.publish(turn)
+        time.sleep(turn_duration)
+
+        # Move forward along the short side
+        self.get_logger().info("Moving along the short side...")
+        self.cmd_vel_publisher.publish(move_forward)
+        time.sleep(short_side_duration)
+
+        # Turn 90 degrees
+        self.get_logger().info("Turning 90 degrees...")
+        self.cmd_vel_publisher.publish(turn)
+        time.sleep(turn_duration)
+
+    # Stop the robot after drawing
+    self.get_logger().info("Stopping the robot...")
+    stop = Twist()
+    self.cmd_vel_publisher.publish(stop)
+
 ```
 
 These blocks definitions given below have an advanced use, if we want to change the scaffoled class name, node name, or publisher name.
@@ -452,6 +532,10 @@ python.pythonGenerator.forBlock["publisher_name"] = function (block) {
 };
 ```
 
+> If a block logic does not involve any code logic, (it might be used as a variable whose value can be used inside other block for data or code manupulations) the pythonGenerator should be configured for such a block to avoid errors.
+
+To view in more depath on how to create custom Blockly blocks, visit [Google Blockly](https://developers.google.com/blockly/guides/create-custom-blocks/overview)
+
 ## Blockly integration
 
 Custom blocks are inserted in the Blockly workspace using XML.
@@ -477,11 +561,125 @@ const workspace = Blockly.inject("blocklyDiv", {
 });
 ```
 
-workspace changes are handle by this function synchronize generated code
+An example html with blockly integration
+
+```html
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Robotont Blockly App</title>
+    <link rel="icon" href="data:," />
+    <!-- Load Blockly from local scripts -->
+    <script src="scripts/blockly.min.js"></script>
+    <!-- Add after Blockly core for pythonGenerator -->
+    <script src="scripts/python_compressed.js"></script>
+
+    <!-- Link to local styles css -->
+    <link rel="stylesheet" href="styles/index.css" />
+  </head>
+  <body>
+    <!-- App header container -->
+    <header class="header mdl-color--cyan-500">
+      <img src="assets/images/logo_knockout.png" alt="logo" />
+      <h1 class="title">Robotont</h1>
+    </header>
+
+    <!-- Blockly Workspace Container -->
+    <div id="blocklyDiv" style="height: 640px"></div>
+  </body>
+</html>
+```
+
+Workspace changes are handle by this function synchronize generated code
 
 ```javascript
 workspace.addChangeListener(() => {
   const code = Blockly.Python.workspaceToCode(workspace);
   document.getElementById("generatedCode").value = code;
 });
+```
+
+## Blocks usage example
+
+Example block combinations for drawing a circle
+
+<img src="custom_block_visuals/draw_circle_example.png" width="200"/>
+
+Downloadable Python generated code from such block combination, to view the result simulation by executing this code [View animated gif](https://github.com/usman125/robotont-blockly-client/blob/main/RViZ_result_simulations/robotont_circle_simulation.gif).
+
+```python
+#!/usr/bin/env python3
+import rclpy
+from rclpy.node import Node
+from geometry_msgs.msg import Twist
+import time, math
+
+class RobotController(Node):
+    def __init__(self):
+        super().__init__('robot_controller')
+        self.cmd_vel_publisher = self.create_publisher(Twist, '/cmd_vel', 10)
+        self.get_logger().info("RobotController Node has been started.")
+        time.sleep(2.0)  # Wait for initialization
+        self.draw_circle(2)
+
+    def draw_circle(self, repeat):
+        """Function to make the robot draw a circle."""
+        linear_speed = 1.0
+        angular_speed = 0.5
+        duration = 2.0  # Time for each circle segment
+
+        for _ in range(repeat):
+            twist = Twist()
+            twist.linear.x = linear_speed
+            twist.angular.z = angular_speed
+            self.cmd_vel_publisher.publish(twist)
+            time.sleep(duration)
+
+        # Stop the robot
+        stop = Twist()
+        self.cmd_vel_publisher.publish(stop)
+
+    def main(args=None):
+        rclpy.init(args=args)
+        node = RobotController()
+        rclpy.spin(node)
+        rclpy.shutdown()
+
+if __name__ == "__main__":
+    main()
+```
+
+Overwrite defaut ROS node code
+
+<img src="custom_block_visuals/overwrite_defaults.png" width="200"/>
+
+Downloadable Python generated code from such block combination
+
+```python
+#!/usr/bin/env python3
+import rclpy
+from rclpy.node import Node
+from geometry_msgs.msg import Twist
+import time, math
+
+class TestController(Node):
+    def __init__(self):
+        super().__init__('test_controller')
+        self.cmd_vel_publisher = self.create_publisher(Twist, '/test_topic', 10)
+        self.get_logger().info("TestController Node has been started.")
+        time.sleep(2.0)  # Wait for initialization
+
+
+    # No movement function defined
+    def no_movement(self):
+        self.get_logger().info("No movement pattern selected")
+
+    def main(args=None):
+        rclpy.init(args=args)
+        node = TestController()
+        rclpy.spin(node)
+        rclpy.shutdown()
+
+if __name__ == "__main__":
+    main()
 ```

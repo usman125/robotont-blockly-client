@@ -164,7 +164,7 @@
         // Find all the configuration blocks within this ros_connection block
         let className = "RobotController";
         let nodeName = "robot_controller";
-        let publisherName = "/cmd_vel";
+        let publisherName = "cmd_vel";
         let movementType = "";
         let repeatCount = 0;
 
@@ -310,7 +310,9 @@
             class ${className}(Node):
                 def __init__(self):
                     super().__init__('${nodeName}')
-                    self.cmd_vel_publisher = self.create_publisher(Twist, /${publisherName}, 10)
+                    self.cmd_vel_publisher = self.create_publisher(Twist, '${
+                      "/" + publisherName
+                    }', 10)
                     self.get_logger().info("${className} Node has been started.")
                     time.sleep(2.0)  # Wait for initialization
                     ${movementCall}
@@ -365,7 +367,7 @@
         switch (movementType) {
           case "RECTANGLE":
             code = `
-            def draw_rectangle(self, repeat):
+            def draw_rectangle(self):
                 """Function to make the robot draw a rectangle."""
                 forward_speed = 1.0   # Linear speed (m/s)
                 turn_speed = 4.0      # Angular speed (rad/s)
@@ -383,7 +385,7 @@
                 turn.linear.x = 0.0
                 turn.angular.z = turn_speed
 
-                for _ in range(repeat*2):
+                for _ in range(${repeatCount * 2}):
                     # Move forward along the long side
                     self.get_logger().info("Moving along the long side...")
                     self.cmd_vel_publisher.publish(move_forward)
@@ -413,13 +415,13 @@
 
           case "CIRCLE":
             code = `
-            def draw_circle(self, repeat):
+            def draw_circle(self):
                 """Function to make the robot draw a circle."""
                 linear_speed = 1.0
                 angular_speed = 0.5
                 duration = 2.0  # Time for each circle segment
                 
-                for _ in range(repeat):
+                for _ in range(${repeatCount}):
                     twist = Twist()
                     twist.linear.x = linear_speed
                     twist.angular.z = angular_speed
@@ -434,12 +436,12 @@
 
           case "STRAIGHT_LINE":
             code = `
-            def move_straight(self, repeat):
+            def move_straight(self):
                 """Function to make the robot move straight."""
                 speed = 1.0
                 duration = 2.0
                 
-                for _ in range(repeat):
+                for _ in range(${repeatCount}):
                     twist = Twist()
                     twist.linear.x = speed
                     self.cmd_vel_publisher.publish(twist)
